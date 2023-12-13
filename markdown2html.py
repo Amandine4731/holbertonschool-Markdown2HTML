@@ -8,8 +8,9 @@
 if __name__ == '__main__':
     import sys
     import os
+    
     if len(sys.argv) < 3:
-        print('Usage: ./markdown2html.py README.md README.html',
+        print('Usage: ./markdown2html.py <input_file> <output_file>',
               file=sys.stderr)
         sys.exit(1)
 
