@@ -19,11 +19,12 @@ if __name__ == "__main__":
         print('Missing {}'.format(sys.argv[1]), file=sys.stderr)
         exit(1)
 
-    '''Convert Markdown headings and unordered lists to HTML'''
+    '''Convert Markdown headings, unordered lists, and ordered lists to HTML'''
     with open(sys.argv[1], 'r') as read_file:
         lines = read_file.readlines()
         with open(sys.argv[2], 'w') as write_file:
             in_list = False  # Flag to track if we are inside a list
+            list_type = None  # 'ul' for unordered list, 'ol' for ordered list
 
             for line in lines:
                 line = line.rstrip('\r\n')
@@ -34,21 +35,37 @@ if __name__ == "__main__":
                     write_file.write("<h{0}>{1}</h{0}>\n".format(count_hashes, line.lstrip('#').strip()))
                 elif line.startswith('- '):
                     # Handle unordered list items
-                    if not in_list:
+                    if not in_list or list_type == 'ol':
                         in_list = True
+                        list_type = 'ul'
                         write_file.write("<ul>\n")
 
                     # Write list item
                     write_file.write("<li>{}</li>\n".format(line.lstrip('- ').strip()))
+                elif line.startswith('* '):
+                    # Handle ordered list items
+                    if not in_list or list_type == 'ul':
+                        in_list = True
+                        list_type = 'ol'
+                        write_file.write("<ol>\n")
+
+                    # Write list item
+                    write_file.write("<li>{}</li>\n".format(line.lstrip('* ').strip()))
                 else:
-                    # End the unordered list if it was open
+                    # End the list if it was open
                     if in_list:
                         in_list = False
-                        write_file.write("</ul>\n")
+                        if list_type == 'ul':
+                            write_file.write("</ul>\n")
+                        elif list_type == 'ol':
+                            write_file.write("</ol>\n")
 
                     # Write the line as it is
                     write_file.write("{}\n".format(line))
 
-            # Close the unordered list if the last line was inside it
+            # Close the list if the last line was inside it
             if in_list:
-                write_file.write("</ul>\n")
+                if list_type == 'ul':
+                    write_file.write("</ul>\n")
+                elif list_type == 'ol':
+                    write_file.write("</ol>\n")
