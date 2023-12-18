@@ -39,8 +39,11 @@ if __name__ == "__main__":
                     if not in_list or list_type == 'ol':
                         in_list = True
                         list_type = 'ul'
+                        # Close the previous paragraph if it was open
+                        if in_paragraph:
+                            write_file.write("</p>\n")
+                            in_paragraph = False
                         write_file.write("<ul>\n")
-
                     # Write list item
                     write_file.write("<li>{}</li>\n".format(line.lstrip('- ').strip()))
                 elif line.startswith('* '):
@@ -48,16 +51,25 @@ if __name__ == "__main__":
                     if not in_list or list_type == 'ul':
                         in_list = True
                         list_type = 'ol'
+                        # Close the previous paragraph if it was open
+                        if in_paragraph:
+                            write_file.write("</p>\n")
+                            in_paragraph = False
                         write_file.write("<ol>\n")
-
                     # Write list item
                     write_file.write("<li>{}</li>\n".format(line.lstrip('* ').strip()))
                 elif line:
                     # Handle paragraphs
                     if not in_paragraph:
                         in_paragraph = True
+                        # Close the previous list if it was open
+                        if in_list:
+                            if list_type == 'ul':
+                                write_file.write("</ul>\n")
+                            elif list_type == 'ol':
+                                write_file.write("</ol>\n")
+                            in_list = False
                         write_file.write("<p>\n")
-
                     # Write paragraph content
                     write_file.write("{}<br/>\n".format(line))
                 else:
@@ -65,7 +77,6 @@ if __name__ == "__main__":
                     if in_paragraph:
                         in_paragraph = False
                         write_file.write("</p>\n")
-
                     # End the list if it was open
                     if in_list:
                         in_list = False
