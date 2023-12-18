@@ -19,12 +19,13 @@ if __name__ == "__main__":
         print('Missing {}'.format(sys.argv[1]), file=sys.stderr)
         exit(1)
 
-    '''Convert Markdown headings, unordered lists, and ordered lists to HTML'''
+    '''Convert Markdown headings, unordered lists, ordered lists, and paragraphs to HTML'''
     with open(sys.argv[1], 'r') as read_file:
         lines = read_file.readlines()
         with open(sys.argv[2], 'w') as write_file:
             in_list = False  # Flag to track if we are inside a list
             list_type = None  # 'ul' for unordered list, 'ol' for ordered list
+            in_paragraph = False  # Flag to track if we are inside a paragraph
 
             for line in lines:
                 line = line.rstrip('\r\n')
@@ -51,7 +52,20 @@ if __name__ == "__main__":
 
                     # Write list item
                     write_file.write("<li>{}</li>\n".format(line.lstrip('* ').strip()))
+                elif line:
+                    # Handle paragraphs
+                    if not in_paragraph:
+                        in_paragraph = True
+                        write_file.write("<p>\n")
+
+                    # Write paragraph content
+                    write_file.write("{}<br/>\n".format(line))
                 else:
+                    # End the paragraph if it was open
+                    if in_paragraph:
+                        in_paragraph = False
+                        write_file.write("</p>\n")
+
                     # End the list if it was open
                     if in_list:
                         in_list = False
@@ -60,9 +74,9 @@ if __name__ == "__main__":
                         elif list_type == 'ol':
                             write_file.write("</ol>\n")
 
-                    # Write the line as it is
-                    write_file.write("{}\n".format(line))
-
+            # Close the paragraph if the last line was inside it
+            if in_paragraph:
+                write_file.write("</p>\n")
             # Close the list if the last line was inside it
             if in_list:
                 if list_type == 'ul':
