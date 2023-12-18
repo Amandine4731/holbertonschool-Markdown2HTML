@@ -8,25 +8,33 @@
 if __name__ == "__main__":
     import sys
     from os import path
-    '''the number of arguments is less than 2'''
+
+    '''Check if the number of arguments is not equal to 3'''
     if len(sys.argv) != 3:
-        print('Usage: ./markdown2html.py README.md README.html' ,file=sys.stderr)
+        print('Usage: ./markdown2html.py README.md README.html', file=sys.stderr)
         exit(1)
-    '''Markdown file doesn’t exist'''
+
+    '''Check if the Markdown file doesn’t exist'''
     if not path.exists(sys.argv[1]):
         print('Missing {}'.format(sys.argv[1]), file=sys.stderr)
         exit(1)
-    '''Headings Markdown'''
+
+    '''Convert Markdown headings to HTML headings'''
     with open(sys.argv[1], 'r') as read_file:
-        line_list = []
-        for lines in read_file.readlines():
-            cout_cra = 0
+        lines = read_file.readlines()
+        with open(sys.argv[2], 'w') as write_file:
             for line in lines:
-                for car in range(len(line)):
-                    if line[car] == '#':
-                        cout_cra += 1
-            lines = lines.rstrip('\r\n')
-            line_list.append("<h{}>{}</h{}>".format(cout_cra, lines.replace('#',''), cout_cra))
-        with open(sys.argv[2], 'a') as write_file:
-            for line in line_list:
-                write_file.write('{}\n'.format(line))
+                line = line.rstrip('\r\n')
+                if line.startswith('#'):
+                    count_hashes = 0
+                    while count_hashes < len(line) and line[count_hashes] == '#':
+                        count_hashes += 1
+
+                    # Ensure the count of '#' is between 1 and 6
+                    count_hashes = min(count_hashes, 6)
+                    
+                    # Write the corresponding HTML heading tag
+                    write_file.write("<h{0}>{1}</h{0}>\n".format(count_hashes, line.lstrip('#').strip()))
+                else:
+                    # Write the line as it is
+                    write_file.write("{}\n".format(line))
