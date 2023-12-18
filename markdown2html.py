@@ -45,7 +45,9 @@ if __name__ == "__main__":
                             in_paragraph = False
                         write_file.write("<ul>\n")
                     # Write list item
-                    write_file.write("<li>{}</li>\n".format(line.lstrip('- ').strip()))
+                    if tag.string is not None:
+                        s_tag = tag.string.strip()
+                        write_file.write("<li>{}</li>\n".format(s_tag))
                 elif line.startswith('* '):
                     # Handle ordered list items
                     if not in_list or list_type == 'ul':
@@ -57,7 +59,9 @@ if __name__ == "__main__":
                             in_paragraph = False
                         write_file.write("<ol>\n")
                     # Write list item
-                    write_file.write("<li>{}</li>\n".format(line.lstrip('* ').strip()))
+                    if tag.string is not None:
+                        s_tag = tag.string.strip()
+                        write_file.write("<li>{}</li>\n".format(s_tag))
                 elif line:
                     # Handle paragraphs
                     if not in_paragraph:
@@ -71,7 +75,9 @@ if __name__ == "__main__":
                             in_list = False
                         write_file.write("<p>\n")
                     # Write paragraph content
-                    write_file.write("{}<br/>\n".format(line))
+                    if tag.string is not None:
+                        s_tag = tag.string.strip()
+                        write_file.write("{}<br/>\n".format(s_tag))
                 else:
                     # End the paragraph if it was open
                     if in_paragraph:
