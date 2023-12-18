@@ -5,69 +5,120 @@
 '''
 
 
+import sys
+import hashlib
+
+
+def remove_prefix(self: str, prefix: str) -> str:
+    """
+    remove prefix
+    """
+    if self.startswith(prefix):
+        return self[len(prefix):]
+    else:
+        return self[:]
+
+
+def remove_suffix(self: str, suffix: str) -> str:
+    """
+    remove suffix
+    """
+    if suffix and self.endswith(suffix):
+        return self[:-len(suffix)]
+    else:
+        return self[:]
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: ./markdown2html.py README.md README.html",
+              file=sys.stderr)
+        exit(1)
+    try:
+        tags = ["*", "-", "#", "\n"]
+        ul = False
+        ol = False
+        p = False
+        file = open(sys.argv[1], "r")
+        file_len = open(sys.argv[1], "r")
+        html = open(sys.argv[2], "w")
+        longeur = len(file_len.readlines())
+        for (fidx, line) in enumerate(file):
+            if line.find("((") != -1 and line.find("))") != -1:
+                find = line.find('((')
+                rfind = line.rfind('))')
+                word = line[find+2:rfind]
+                word = word.replace("C", "")
+                word = word.replace("c", "")
+                line = line.replace(f"(({line[find+2:rfind]}))", word)
+                line += "\n"
+            if line.find("[[") != -1 and line.find("]]") != -1:
+                find = line.find('[[')
+                rfind = line.rfind(']]')
+                word = line[find+2:rfind]
+                secret = hashlib.md5(word.encode()).hexdigest()
+                line = line.replace(f"{line[find:rfind+2]}", secret, 1)
+                line += "\n"
+            if line.find("**") != -1:
+                line = line.replace("**", "<b>", 1)
+                line = line.replace("**", "</b>", 1)
+            if line.find("__") != -1:
+                line = line.replace("__", "<em>", 1)
+                line = line.replace("__", "</em>", 1)
+            if line[0] not in tags:
+                if p:
+                    print("<br>", file=html)
+                if not p:
+                    print(f"<p>", file=html)
+                    p = True
+                print(f"{line[:-1]}", file=html)
+            if line.isspace():
+                if ul:
+                    print("</ul>", file=html)
+                    ul = False
+                if ol:
+                    print("</ol>", file=html)
+                    ol = False
+                if p:
+                    print("</p>", file=html)
+                    p = False
+            if line.rfind("#") != -1:
+                pos = line.rfind("#")
+                line = remove_prefix(line, f"{line[:pos+2]}")
+                line = f"<h{pos+1}>{line[:-1]}</h{pos+1}>"
+                print(line, file=html)
+            if line.startswith("-"):
+                if ul is False:
+                    tag = f"<ul>"
+                    ul = True
+                    print(tag, file=html)
+                line = remove_prefix(line, "- ")
+                line = f"<li>{line[:-1]}</li>"
+                print(line, file=html)
+            if line.startswith("*"):
+                if ol is False:
+                    tag = f"<ol>"
+                    ol = True
+                    print(tag, file=html)
+                line = remove_prefix(line, "* ")
+                line = f"<li>{line[:-1]}</li>"
+                print(line, file=html)
+            if fidx + 1 == longeur:
+                if ol:
+                    print("</ol>", file=html)
+                    ol = False
+                if ul:
+                    print("</ul>", file=html)
+                    ul = False
+                if p:
+                    print("</p>", file=html)
+                    p = False
+
+        exit(0)
+    except FileNotFoundError:
+        print(f"Missing {sys.argv[1]}", file=sys.stderr)
+        exit(1)
+
+
 if __name__ == "__main__":
-    import sys
-    from os import path
-    '''Check if the number of arguments is not equal to 3'''
-    if len(sys.argv) != 3:
-        print('Usage: ./markdown2html.py README.md README.html', file=sys.stderr)
-        exit(1)
-    '''Check if the Markdown file doesn’t exist'''
-    if not path.exists(sys.argv[1]):
-        print('Missing {}'.format(sys.argv[1]), file=sys.stderr)
-        exit(1)
-
-    '''Convert Markdown headings, unordered lists, and paragraphs to HTML'''
-    with open(sys.argv[1], 'r') as read_file:
-        lines = read_file.readlines()
-        with open(sys.argv[2], 'w') as write_file:
-            in_list = False  # Flag to track if we are inside a list
-            in_paragraph = False  # Flag to track if we are inside a paragraph
-
-            for line in lines:
-                line = line.rstrip('\r\n')
-                if line.startswith('#'):
-                    # Convert Markdown heading to HTML heading
-                    count_hashes = min(line.count('#'), 6)
-                    write_file.write("<h{0}>{1}</h{0}>\n".format(count_hashes, line.lstrip('#').strip()))
-                elif line.startswith('- '):
-                    # Handle unordered list items
-                    if not in_list:
-                        in_list = True
-                        write_file.write("<ul>\n")
-                    
-                    # Close the paragraph if it was open
-                    if in_paragraph:
-                        in_paragraph = False
-                        write_file.write("</p>\n")
-                    
-                    # Write list item
-                    write_file.write("<li>{}</li>\n".format(line.lstrip('- ').strip()))
-                elif line:
-                    # Handle paragraphs
-                    if not in_paragraph:
-                        in_paragraph = True
-                        write_file.write("<p>\n")
-
-                    # Write paragraph content
-                    write_file.write("{}<br/>\n".format(line))
-                else:
-                    # End the paragraph if it was open
-                    if in_paragraph:
-                        in_paragraph = False
-                        write_file.write("</p>\n")
-
-                    # End the unordered list if it was open
-                    if in_list:
-                        in_list = False
-                        write_file.write("</ul>\n")
-
-                    # Write the line as it is
-                    write_file.write("{}\n".format(line))
-
-            # Close the paragraph if the last line was inside it
-            if in_paragraph:
-                write_file.write("</p>\n")
-            # Close the unordered list if the last line was inside it
-            if in_list:
-                write_file.write("</ul>\n")
+    main()
